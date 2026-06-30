@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极速待办 (AI Generated)</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; display: flex; justify-content: center; padding-top: 50px; margin: 0; }
+        .app-container { background: white; width: 90%; max-width: 450px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 30px; }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        .input-area { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; outline: none; transition: border 0.3s; }
+        input[type="text"]:focus { border-color: #007bff; }
+        .add-btn { background: #007bff; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        .add-btn:hover { background: #0056b3; }
+        .todo-list { list-style: none; padding: 0; margin: 0; }
+        .todo-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .todo-item:last-child { border-bottom: none; }
+        .task-content { display: flex; align-items: center; gap: 12px; flex: 1; overflow: hidden; }
+        .task-text { font-size: 16px; color: #333; cursor: pointer; word-break: break-all; }
+        .completed .task-text { text-decoration: line-through; color: #aaa; }
+        .actions button { background: none; border: none; cursor: pointer; font-size: 14px; padding: 5px; margin-left: 5px; color: #666; }
+        .actions .edit-btn:hover { color: #007bff; }
+        .actions .del-btn:hover { color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h2>🚀 极速待办</h2>
+    <div class="input-area">
+        <input type="text" id="taskInput" placeholder="输入你想做的事情，按回车键添加...">
+        <button class="add-btn" id="addBtn">添加</button>
+    </div>
+    <ul class="todo-list" id="todoList">
+        </ul>
+</div>
+
+<script>
+    // 1. 数据初始化与持久化读取 (localStorage)
+    let tasks = JSON.parse(localStorage.getItem('todo_data')) || [];
+
+    const taskInput = document.getElementById('taskInput');
+    const todoList = document.getElementById('todoList');
+    const addBtn = document.getElementById('addBtn');
+
+    // 2. 核心渲染函数 (Data-Driven)
+    function renderTasks() {
+        todoList.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.className = `todo-item ${task.completed ? 'completed' : ''}`;
+            
+            li.innerHTML = `
+                <div class="task-content">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+                    <span class="task-text" ondblclick="editTask(${index})">${escapeHtml(task.text)}</span>
+                </div>
+                <div class="actions">
+                    <button class="edit-btn" onclick="editTask(${index})">✎</button>
+                    <button class="del-btn" onclick="deleteTask(${index})">✕</button>
+                </div>
+            `;
+            todoList.appendChild(li);
+        });
+        // 每次渲染后同步到本地存储
+        localStorage.setItem('todo_data', JSON.stringify(tasks));
+    }
+
+    // 3. 增 (Add)
+    function addTask() {
+        const text = taskInput.value.trim();
+        if (text) {
+            tasks.push({ text: text, completed: false });
+            taskInput.value = '';
+            renderTasks();
+        }
+    }
+
+    // 4. 删 (Delete)
+    function deleteTask(index) {
+        tasks.splice(index, 1);
+        renderTasks();
+    }
+
+    // 5. 改 (Edit)
+    function editTask(index) {
+        const currentText = tasks[index].text;
+        const newText = prompt("编辑任务内容：", currentText);
+        if (newText !== null && newText.trim() !== "") {
+            tasks[index].text = newText.trim();
+            renderTasks();
+        }
+    }
+
+    // 6. 勾选完成 (Toggle)
+    function toggleTask(index) {
+        tasks[index].completed = !tasks[index].completed;
+        renderTasks();
+    }
+
+    // 安全防御：防止 XSS 注入
+    function escapeHtml(unsafe) {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
+    // 绑定回车事件
+    taskInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') addTask();
+    });
+    addBtn.addEventListener('click', addTask);
+
+    // 首次加载渲染
+    renderTasks();
+</script>
+
+</body>
+</html>
